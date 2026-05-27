@@ -15,8 +15,8 @@ export default function SignInPage() {
     setIsLoading(true);
     setError(null);
 
-    const result = await signIn("resend", {
-      email,
+    const result = await signIn("email", {
+      email: email.trim().toLowerCase(),
       redirect: false,
       callbackUrl: "/",
     });
@@ -24,7 +24,9 @@ export default function SignInPage() {
     setIsLoading(false);
 
     if (result?.error) {
-      setError("Sign-in failed. Use a valid, allowed .edu email.");
+      setError(
+        "Sign-in failed. Use an allowed .edu address, or check Resend sender settings.",
+      );
       return;
     }
 
