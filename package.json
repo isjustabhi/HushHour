@@ -11,6 +11,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
     "@base-ui/react": "^1.5.0",
+    "@next-auth/supabase-adapter": "^0.2.1",
     "@supabase/supabase-js": "^2.106.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

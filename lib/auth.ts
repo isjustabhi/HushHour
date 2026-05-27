@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
+import { SupabaseAdapter } from "@next-auth/supabase-adapter";
 import { Resend } from "resend";
 import { isAllowedEduDomain } from "@/lib/edu-domains";
 import { hashEduEmail } from "@/lib/hash";
@@ -84,6 +85,10 @@ async function upsertUserByEmail(email: string): Promise<AppUserRow> {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: SupabaseAdapter({
+    url: process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  }),
   session: {
     strategy: "jwt",
   },
