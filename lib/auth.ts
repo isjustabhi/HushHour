@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import { SupabaseAdapter } from "@next-auth/supabase-adapter";
-import { Resend } from "resend";
+import { sendSignInEmail } from "@/lib/resend-sign-in";
 import { isAllowedEduDomain } from "@/lib/edu-domains";
 import { hashEduEmail } from "@/lib/hash";
 import { isEduHashBanned } from "@/lib/ban-list";
@@ -96,23 +96,9 @@ export const authOptions: NextAuthOptions = {
     EmailProvider({
       from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
       async sendVerificationRequest({ identifier, url }) {
-        const apiKey = process.env.RESEND_API_KEY;
-        const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
-        if (!apiKey) {
-          throw new Error("RESEND_API_KEY is not configured");
-        }
-
-        const resend = new Resend(apiKey);
-        const { error } = await resend.emails.send({
-          from,
-          to: identifier,
-          subject: "Your HushHour sign-in link",
-          html: `<p>Sign in to HushHour with this secure link:</p><p><a href="${url}">${url}</a></p>`,
-        });
-
-        if (error) {
-          console.error("[auth] Resend send failed:", error);
-          throw new Error(error.message);
+        const sent = await sendSignInEmail(identifier, url);
+        if (!sent.ok) {
+          throw new Error(sent.hint ? `${sent.message} ${sent.hint}` : sent.message);
         }
       },
     }),

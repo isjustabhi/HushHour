@@ -2,7 +2,6 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { isAllowedEduDomain } from "@/lib/edu-domains";
@@ -57,42 +56,25 @@ function SignInPageInner() {
       return;
     }
 
-    const result = await signIn("email", {
-      email: normalized,
-      redirect: false,
-      callbackUrl: "/",
+    const response = await fetch("/api/auth/magic-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: normalized, callbackUrl: "/" }),
     });
+
+    const payload = (await response.json()) as {
+      ok?: boolean;
+      error?: string;
+      hint?: string;
+    };
 
     setIsLoading(false);
 
-    if (result?.error) {
-      let message = messageForSignInError(result.error);
-      try {
-        const check = await fetch("/api/auth/config-check");
-        const cfg = (await check.json()) as {
-          hasResendKey?: boolean;
-          emailFrom?: string | null;
-          hasServiceRoleKey?: boolean;
-        };
-        if (!cfg.hasResendKey) {
-          message += " Missing RESEND_API_KEY on the server.";
-        } else if (!cfg.emailFrom || cfg.emailFrom.includes("placeholder")) {
-          message += " Set EMAIL_FROM=onboarding@resend.dev in Vercel.";
-        } else if (result.error === "EmailSignin") {
-          message += ` Sender: ${cfg.emailFrom}. Check Resend → Emails.`;
-        }
-        if (!cfg.hasServiceRoleKey) {
-          message += " Missing SUPABASE_SERVICE_ROLE_KEY.";
-        }
-      } catch {
-        // ignore config-check failures
-      }
-      setError(message);
-      return;
-    }
-
-    if (result?.ok === false) {
-      setError(messageForSignInError(undefined));
+    if (!response.ok) {
+      setError(
+        [payload.error, payload.hint].filter(Boolean).join(" ") ||
+          "Sign-in failed. Try again.",
+      );
       return;
     }
 
