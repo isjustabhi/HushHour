@@ -94,16 +94,17 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     EmailProvider({
-      from: process.env.EMAIL_FROM ?? "noreply@example.com",
-      async sendVerificationRequest({ identifier, url, provider }) {
+      from: process.env.EMAIL_FROM ?? "hushhour@resend.dev",
+      async sendVerificationRequest({ identifier, url }) {
         const apiKey = process.env.RESEND_API_KEY;
+        const from = process.env.EMAIL_FROM ?? "hushhour@resend.dev";
         if (!apiKey) {
           throw new Error("RESEND_API_KEY is not configured");
         }
 
         const resend = new Resend(apiKey);
         const { error } = await resend.emails.send({
-          from: provider.from as string,
+          from,
           to: identifier,
           subject: "Your HushHour sign-in link",
           html: `<p>Sign in to HushHour with this secure link:</p><p><a href="${url}">${url}</a></p>`,

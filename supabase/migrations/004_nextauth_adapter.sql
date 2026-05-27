@@ -1,3 +1,6 @@
+-- Tables for @next-auth/supabase-adapter. After this file, run 005_nextauth_expose_schema.sql
+-- (or expose next_auth in Dashboard → API → Exposed schemas) to avoid PGRST106 on sign-in.
+
 create schema if not exists next_auth;
 
 create table if not exists next_auth.users (

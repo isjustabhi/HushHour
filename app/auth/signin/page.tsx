@@ -1,22 +1,64 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { isAllowedEduDomain } from "@/lib/edu-domains";
 
-export default function SignInPage() {
+function messageForSignInError(code: string | undefined): string {
+  switch (code) {
+    case "AccessDenied":
+      return "That email is not allowed (campus not on the list, or account restricted).";
+    case "EmailSignin":
+      return "Could not send the magic link. In Vercel, confirm RESEND_API_KEY and EMAIL_FROM=hushhour@resend.dev, then check Resend → Emails for errors.";
+    case "Configuration":
+      return "Auth is misconfigured on the server. In Supabase, run migrations 004 and 005 and expose the next_auth schema; in Vercel, set SUPABASE_SERVICE_ROLE_KEY (not the anon key).";
+    default:
+      return code
+        ? `Sign-in failed (${code}). Open Vercel → Logs → POST /api/auth/signin/email for details.`
+        : "Sign-in failed. Try again or check Vercel logs.";
+  }
+}
+
+function SignInPageInner() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setError(messageForSignInError(urlError));
+    }
+  }, [searchParams]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
 
+    const normalized = email.trim().toLowerCase();
+    const domain = normalized.split("@")[1] ?? "";
+
+    if (!domain.endsWith(".edu")) {
+      setError("Use a university .edu email address.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isAllowedEduDomain(domain)) {
+      setError(
+        `"${domain}" is not on the campus allowlist yet. Try your school's main domain (e.g. name@arizona.edu, not a subdomain).`,
+      );
+      setIsLoading(false);
+      return;
+    }
+
     const result = await signIn("email", {
-      email: email.trim().toLowerCase(),
+      email: normalized,
       redirect: false,
       callbackUrl: "/",
     });
@@ -24,9 +66,33 @@ export default function SignInPage() {
     setIsLoading(false);
 
     if (result?.error) {
-      setError(
-        "Sign-in failed. Use an allowed .edu address, or check Resend sender settings.",
-      );
+      let message = messageForSignInError(result.error);
+      try {
+        const check = await fetch("/api/auth/config-check");
+        const cfg = (await check.json()) as {
+          hasResendKey?: boolean;
+          emailFrom?: string | null;
+          hasServiceRoleKey?: boolean;
+        };
+        if (!cfg.hasResendKey) {
+          message += " Missing RESEND_API_KEY on the server.";
+        } else if (!cfg.emailFrom || cfg.emailFrom.includes("placeholder")) {
+          message += " Set EMAIL_FROM=hushhour@resend.dev in Vercel.";
+        } else if (result.error === "EmailSignin") {
+          message += ` Sender: ${cfg.emailFrom}. Check Resend → Emails.`;
+        }
+        if (!cfg.hasServiceRoleKey) {
+          message += " Missing SUPABASE_SERVICE_ROLE_KEY.";
+        }
+      } catch {
+        // ignore config-check failures
+      }
+      setError(message);
+      return;
+    }
+
+    if (result?.ok === false) {
+      setError(messageForSignInError(undefined));
       return;
     }
 
@@ -57,5 +123,13 @@ export default function SignInPage() {
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
       </main>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInPageInner />
+    </Suspense>
   );
 }
