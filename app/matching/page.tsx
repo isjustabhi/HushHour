@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MatchingScreen from "@/components/MatchingScreen";
 import { trackEvent } from "@/lib/analytics";
@@ -8,7 +8,7 @@ import { getRealtimeClient } from "@/lib/realtime";
 
 type Role = "seeker" | "listener";
 
-export default function MatchingPage() {
+function MatchingPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const role = (params.get("role") ?? "seeker") as Role;
@@ -133,5 +133,22 @@ export default function MatchingPage() {
       showSafetyGuide={showSafetyGuide}
       onSafetyGuide={() => router.replace("/ai-guide")}
     />
+  );
+}
+
+export default function MatchingPage() {
+  return (
+    <Suspense
+      fallback={
+        <MatchingScreen
+          elapsedMs={0}
+          onCancel={() => {}}
+          showSafetyGuide={false}
+          onSafetyGuide={() => {}}
+        />
+      }
+    >
+      <MatchingPageInner />
+    </Suspense>
   );
 }
