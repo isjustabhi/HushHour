@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { isAllowedEduDomain } from "@/lib/edu-domains";
+import { isAllowedSignInEmail } from "@/lib/edu-domains";
 
 function messageForSignInError(code: string | undefined): string {
   switch (code) {
@@ -40,17 +40,9 @@ function SignInPageInner() {
     setError(null);
 
     const normalized = email.trim().toLowerCase();
-    const domain = normalized.split("@")[1] ?? "";
-
-    if (!domain.endsWith(".edu")) {
-      setError("Use a university .edu email address.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!isAllowedEduDomain(domain)) {
+    if (!isAllowedSignInEmail(normalized)) {
       setError(
-        `"${domain}" is not on the campus allowlist yet. Try your school's main domain (e.g. name@arizona.edu, not a subdomain).`,
+        "Use an allowed .edu address or Gmail (gmail.com) for demo sign-in.",
       );
       setIsLoading(false);
       return;
@@ -86,7 +78,7 @@ function SignInPageInner() {
       <main className="w-full max-w-md space-y-6">
         <h1 className="text-3xl font-semibold">Sign in</h1>
         <p className="text-neutral-400">
-          Enter your university email to receive a secure magic link.
+          Enter your .edu or Gmail address to receive a secure magic link.
         </p>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -94,7 +86,7 @@ function SignInPageInner() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@university.edu"
+            placeholder="you@university.edu or you@gmail.com"
             required
           />
           <Button disabled={isLoading} className="w-full" type="submit">

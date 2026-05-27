@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SupabaseAdapter } from "@next-auth/supabase-adapter";
-import { isAllowedEduDomain } from "@/lib/edu-domains";
+import { isAllowedSignInEmail } from "@/lib/edu-domains";
 import { hashEduEmail } from "@/lib/hash";
 import { isEduHashBanned } from "@/lib/ban-list";
 import { deleteVerificationTokensForEmail } from "@/lib/next-auth-db";
@@ -31,18 +31,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  const domain = email.split("@")[1] ?? "";
-  if (!domain.endsWith(".edu")) {
-    return NextResponse.json(
-      { error: "Use a university .edu email address." },
-      { status: 400 },
-    );
-  }
-
-  if (!isAllowedEduDomain(domain)) {
+  if (!isAllowedSignInEmail(email)) {
     return NextResponse.json(
       {
-        error: `"${domain}" is not on the campus allowlist. Use your school's main domain (e.g. name@arizona.edu).`,
+        error:
+          "Use an allowed .edu address or Gmail (gmail.com) for demo sign-in.",
       },
       { status: 400 },
     );

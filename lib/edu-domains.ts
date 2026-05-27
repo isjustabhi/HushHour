@@ -195,6 +195,29 @@ export const EDU_DOMAIN_WHITELIST = [
 
 export const EDU_DOMAIN_SET = new Set<string>(EDU_DOMAIN_WHITELIST);
 
+/** Demo / Resend-friendly sign-in (not for production campus verification). */
+export const DEMO_EMAIL_DOMAINS = ["gmail.com", "googlemail.com"] as const;
+
+const DEMO_EMAIL_DOMAIN_SET = new Set<string>(DEMO_EMAIL_DOMAINS);
+
 export function isAllowedEduDomain(domain: string): boolean {
   return EDU_DOMAIN_SET.has(domain.toLowerCase().trim());
+}
+
+export function isDemoEmailDomain(domain: string): boolean {
+  return DEMO_EMAIL_DOMAIN_SET.has(domain.toLowerCase().trim());
+}
+
+export function isAllowedSignInDomain(domain: string): boolean {
+  const normalized = domain.toLowerCase().trim();
+  return isAllowedEduDomain(normalized) || isDemoEmailDomain(normalized);
+}
+
+export function getSignInDomainFromEmail(email: string): string {
+  return email.split("@")[1]?.toLowerCase().trim() ?? "";
+}
+
+export function isAllowedSignInEmail(email: string): boolean {
+  const domain = getSignInDomainFromEmail(email);
+  return domain.length > 0 && isAllowedSignInDomain(domain);
 }

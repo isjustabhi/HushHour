@@ -2,7 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import { SupabaseAdapter } from "@next-auth/supabase-adapter";
 import { sendSignInEmail } from "@/lib/resend-sign-in";
-import { isAllowedEduDomain } from "@/lib/edu-domains";
+import { isAllowedSignInDomain } from "@/lib/edu-domains";
 import { hashEduEmail } from "@/lib/hash";
 import { isEduHashBanned } from "@/lib/ban-list";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -112,7 +112,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       const domain = getDomainFromEmail(email);
-      if (!isAllowedEduDomain(domain)) {
+      if (!isAllowedSignInDomain(domain)) {
         return false;
       }
 
