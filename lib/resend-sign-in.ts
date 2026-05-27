@@ -1,5 +1,7 @@
-import { createHash, randomBytes } from "crypto";
 import { Resend } from "resend";
+import { buildMagicLinkPayload } from "@/lib/next-auth-token";
+
+export { buildMagicLinkPayload };
 
 export type SendSignInEmailResult =
   | { ok: true }
@@ -21,7 +23,7 @@ export async function sendSignInEmail(
     from,
     to,
     subject: "Your HushHour sign-in link",
-    html: `<p>Sign in to HushHour:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p><p>This link expires in 24 hours.</p>`,
+    html: `<p>Sign in to HushHour:</p><p><a href="${verifyUrl}">Continue to sign in</a></p><p>On the next page, tap <strong>Complete sign in</strong>. This link expires in 24 hours.</p>`,
   });
 
   if (!error) {
@@ -41,28 +43,3 @@ export async function sendSignInEmail(
   return { ok: false, message, hint };
 }
 
-export function buildEmailCallbackUrl(
-  email: string,
-  callbackUrl: string,
-): { verifyUrl: string; token: string; expires: Date; hashedToken: string } {
-  const secret = process.env.NEXTAUTH_SECRET;
-  if (!secret) {
-    throw new Error("NEXTAUTH_SECRET is not configured");
-  }
-
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-  const token = randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 86400 * 1000);
-  const hashedToken = createHash("sha256")
-    .update(`${token}${secret}`)
-    .digest("hex");
-
-  const params = new URLSearchParams({
-    callbackUrl,
-    token,
-    email,
-  });
-  const verifyUrl = `${baseUrl}/api/auth/callback/email?${params}`;
-
-  return { verifyUrl, token, expires, hashedToken };
-}

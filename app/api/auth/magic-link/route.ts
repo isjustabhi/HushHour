@@ -3,8 +3,9 @@ import { SupabaseAdapter } from "@next-auth/supabase-adapter";
 import { isAllowedEduDomain } from "@/lib/edu-domains";
 import { hashEduEmail } from "@/lib/hash";
 import { isEduHashBanned } from "@/lib/ban-list";
+import { deleteVerificationTokensForEmail } from "@/lib/next-auth-db";
 import {
-  buildEmailCallbackUrl,
+  buildMagicLinkPayload,
   sendSignInEmail,
 } from "@/lib/resend-sign-in";
 
@@ -69,7 +70,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const { verifyUrl, expires, hashedToken } = buildEmailCallbackUrl(
+    await deleteVerificationTokensForEmail(email);
+
+    const { confirmUrl, expires, hashedToken } = buildMagicLinkPayload(
       email,
       callbackUrl,
     );
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
       expires,
     });
 
-    const sent = await sendSignInEmail(email, verifyUrl);
+    const sent = await sendSignInEmail(email, confirmUrl);
     if (!sent.ok) {
       return NextResponse.json(
         { error: sent.message, hint: sent.hint },
