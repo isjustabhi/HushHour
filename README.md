@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HushHour
 
-## Getting Started
+![HushHour chat screenshot](public/hero-chat.png)
 
-First, run the development server:
+**Five minutes. One stranger. Nobody alone tonight.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+HushHour matches verified university students for short, anonymous, moderated peer support chats. Sessions are time-bounded, safety-first, and designed for the late-night gap between "I need someone now" and formal counseling.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Safety architecture: [`docs/SAFETY.md`](docs/SAFETY.md)
+- Research memo: [`docs/RESEARCH_MEMO.md`](docs/RESEARCH_MEMO.md)
+- Demo script: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md)
+- Privacy posture: [`docs/PRIVACY.md`](docs/PRIVACY.md)
+- Ethics and product boundaries: [`docs/ETHICS.md`](docs/ETHICS.md)
+- Live demo link: `https://hushhour-demo.example.com`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 16 + TypeScript + App Router
+- Supabase (Postgres, auth-linked data, realtime)
+- Claude Haiku moderation via `@anthropic-ai/sdk`
+- NextAuth email magic links (`.edu` only)
+- Tailwind + shadcn/ui
+- PostHog (anonymous product analytics only)
 
-## Learn More
+## Local Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy env template and fill values:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+3. Apply Supabase migrations in order:
+   - `supabase/migrations/001_initial.sql`
+   - `supabase/migrations/002_journal_entries.sql`
+   - `supabase/migrations/003_extend_votes.sql`
+4. Run dev server:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Core Product Guarantees
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `.edu`-restricted access with hashed identifiers
+- Real-time message moderation before delivery
+- Crisis route separated from peer matching
+- Time-bounded sessions (5 min default, max 15)
+- Ephemeral messaging with TTL cleanup
+- Aftercare and resources after every chat
 
-## Deploy on Vercel
+## Repo Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `app/` - routes and API handlers
+- `components/` - UI primitives and flows
+- `lib/` - domain logic, prompts, schemas, clients
+- `supabase/` - SQL migrations and cleanup function
+- `docs/` - hackathon-facing documentation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
