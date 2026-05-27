@@ -12,7 +12,7 @@ function messageForSignInError(code: string | undefined): string {
     case "AccessDenied":
       return "That email is not allowed (campus not on the list, or account restricted).";
     case "EmailSignin":
-      return "Could not send the magic link. In Vercel, confirm RESEND_API_KEY and EMAIL_FROM=hushhour@resend.dev, then check Resend → Emails for errors.";
+      return "Could not send the magic link. Use EMAIL_FROM=onboarding@resend.dev (no custom domain). On Resend's free plan, mail only goes to the email on your Resend account unless you verify a domain you own.";
     case "Configuration":
       return "Auth is misconfigured on the server. In Supabase, run migrations 004 and 005 and expose the next_auth schema; in Vercel, set SUPABASE_SERVICE_ROLE_KEY (not the anon key).";
     default:
@@ -77,7 +77,7 @@ function SignInPageInner() {
         if (!cfg.hasResendKey) {
           message += " Missing RESEND_API_KEY on the server.";
         } else if (!cfg.emailFrom || cfg.emailFrom.includes("placeholder")) {
-          message += " Set EMAIL_FROM=hushhour@resend.dev in Vercel.";
+          message += " Set EMAIL_FROM=onboarding@resend.dev in Vercel.";
         } else if (result.error === "EmailSignin") {
           message += ` Sender: ${cfg.emailFrom}. Check Resend → Emails.`;
         }

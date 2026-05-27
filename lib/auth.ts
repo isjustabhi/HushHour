@@ -94,10 +94,10 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     EmailProvider({
-      from: process.env.EMAIL_FROM ?? "hushhour@resend.dev",
+      from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
       async sendVerificationRequest({ identifier, url }) {
         const apiKey = process.env.RESEND_API_KEY;
-        const from = process.env.EMAIL_FROM ?? "hushhour@resend.dev";
+        const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
         if (!apiKey) {
           throw new Error("RESEND_API_KEY is not configured");
         }
